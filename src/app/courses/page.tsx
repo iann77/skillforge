@@ -165,18 +165,19 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           </div>
 
           {/* Category Horizontal Pills */}
-          <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+          <div className="mb-8 flex items-center gap-2.5 overflow-x-auto pb-3 pt-1 scrollbar-none">
             <Link
               href={`/courses?${new URLSearchParams({
                 ...(selectedDifficulty ? { difficulty: selectedDifficulty } : {}),
                 ...(searchQuery ? { search: searchQuery } : {}),
               }).toString()}`}
+              className="shrink-0"
             >
               <span
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 cursor-pointer transition-colors ${
+                className={`inline-flex items-center whitespace-nowrap px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all ${
                   !selectedCategory
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "bg-white border border-slate-200 text-slate-700 hover:border-indigo-400 hover:text-indigo-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                    : "bg-white border border-slate-200/90 text-slate-700 hover:border-indigo-400 hover:text-indigo-600 shadow-sm dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300"
                 }`}
               >
                 Semua Kategori ({courses.length})
@@ -192,12 +193,13 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                     ...(selectedDifficulty ? { difficulty: selectedDifficulty } : {}),
                     ...(searchQuery ? { search: searchQuery } : {}),
                   }).toString()}`}
+                  className="shrink-0"
                 >
                   <span
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium shrink-0 cursor-pointer transition-colors ${
+                    className={`inline-flex items-center whitespace-nowrap px-4 py-2 rounded-full text-xs font-medium cursor-pointer transition-all ${
                       isSelected
-                        ? "bg-indigo-600 text-white shadow-sm"
-                        : "bg-white border border-slate-200 text-slate-700 hover:border-indigo-400 hover:text-indigo-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300"
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                        : "bg-white border border-slate-200/90 text-slate-700 hover:border-indigo-400 hover:text-indigo-600 shadow-sm dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300"
                     }`}
                   >
                     {cat.name}
