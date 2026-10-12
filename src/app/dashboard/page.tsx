@@ -220,7 +220,7 @@ export default async function DashboardPage() {
               </Link>
             </div>
 
-            {(!enrollments || enrollments.length === 0) && (
+            {(!enrollments || enrollments.length === 0) ? (
               <Card className="p-8 text-center border-dashed border-2 border-slate-300 dark:border-slate-800">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 mb-4 dark:bg-indigo-950 dark:text-indigo-400">
                   <BookOpen className="h-7 w-7" />
@@ -238,6 +238,60 @@ export default async function DashboardPage() {
                   </Button>
                 </Link>
               </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {enrollments.map((item) => {
+                  const course = item.courses;
+                  if (!course) return null;
+                  const progress = Number(item.progress_percentage || 0);
+
+                  return (
+                    <Card
+                      key={item.id}
+                      className="flex flex-col justify-between overflow-hidden border-slate-200/90 hover:border-indigo-400 transition-all hover:shadow-md dark:border-slate-800"
+                    >
+                      <div className="p-5 space-y-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <Badge variant={progress === 100 ? "success" : "default"}>
+                            {progress === 100 ? "Selesai" : "Sedang Berjalan"}
+                          </Badge>
+                          <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                            {progress}%
+                          </span>
+                        </div>
+
+                        <h3 className="font-bold text-base line-clamp-2 text-slate-900 dark:text-white">
+                          {course.title}
+                        </h3>
+
+                        <p className="text-xs text-slate-500 line-clamp-2">
+                          {course.description}
+                        </p>
+
+                        {/* Progress Bar */}
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+                          <div
+                            className="bg-indigo-600 h-full rounded-full transition-all"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
+                        <span className="text-xs text-slate-400">
+                          {progress === 100 ? "100% Selesai" : "Lanjutkan modul"}
+                        </span>
+                        <Link href={`/courses/${course.slug}`}>
+                          <Button size="sm" className="gap-1.5 text-xs">
+                            <BookOpen className="h-3.5 w-3.5" />
+                            Lanjutkan Belajar
+                          </Button>
+                        </Link>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
             )}
           </div>
         </Container>
