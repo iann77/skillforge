@@ -20,6 +20,7 @@ import {
   Sparkles,
   ChevronRight,
   ShieldAlert,
+  Award,
 } from "lucide-react";
 
 interface Props {
@@ -245,6 +246,35 @@ export default async function CourseDetailPage({ params }: Props) {
                     })}
                   </div>
                 )}
+              </div>
+
+              {/* Uji Kompetensi / Kuis Section */}
+              <div className="p-6 rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 dark:from-indigo-950/30 dark:to-purple-950/20 dark:border-indigo-900/60 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default" className="text-xs">
+                        Evaluasi Akhir
+                      </Badge>
+                      <span className="text-xs text-indigo-700 dark:text-indigo-300 font-semibold">
+                        Passing Score: 70%
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      Uji Kompetensi & Asesmen Terverifikasi
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xl">
+                      Uji pemahaman teoritis dan praktis Anda melalui soal-soal pilihan ganda terstandar. Skor dinilai langsung oleh server dan tersimpan di transkrip belajar Anda.
+                    </p>
+                  </div>
+
+                  <Link href={`/courses/${course.slug}/quiz`} className="shrink-0">
+                    <Button className="gap-2 text-xs font-semibold shadow-md shadow-indigo-600/20">
+                      <Award className="h-4 w-4" />
+                      Mulai Kerjakan Kuis
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
 

@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
+  RotateCcw,
 } from "lucide-react";
 
 export const metadata = {
@@ -61,8 +62,9 @@ export default async function DashboardPage() {
   // Ambil hasil kuis
   const { data: quizAttempts } = await supabase
     .from("quiz_attempts")
-    .select("score, is_passed")
-    .eq("user_id", user.id);
+    .select("*, quizzes(*, courses(*))")
+    .eq("user_id", user.id)
+    .order("started_at", { ascending: false });
 
   const averageScore =
     quizAttempts && quizAttempts.length > 0
@@ -289,6 +291,85 @@ export default async function DashboardPage() {
                         </Link>
                       </div>
                     </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Quiz Attempts / History Section */}
+          <div className="space-y-4 pt-6 border-t border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Award className="h-5 w-5 text-indigo-600" />
+                  Riwayat Uji Kompetensi Kuis
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Hasil evaluasi pemahaman materi yang terverifikasi otomatis oleh server
+                </p>
+              </div>
+            </div>
+
+            {(!quizAttempts || quizAttempts.length === 0) ? (
+              <Card className="p-6 text-center border-dashed border border-slate-200 dark:border-slate-800">
+                <p className="text-xs text-slate-500">
+                  Belum ada riwayat pengerjaan kuis. Selesaikan modul materi pelajaran untuk mulai mengerjakan evaluasi akhir.
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {quizAttempts.map((attempt) => {
+                  const quiz = attempt.quizzes;
+                  const course = quiz?.courses;
+                  const score = Number(attempt.score);
+                  const isPassed = attempt.is_passed;
+
+                  return (
+                    <div
+                      key={attempt.id}
+                      className="p-4 rounded-xl border border-slate-200/90 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-indigo-300 transition-colors dark:border-slate-800 dark:bg-slate-900"
+                    >
+                      <div className="flex items-start sm:items-center gap-3.5">
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold shrink-0 ${
+                            isPassed
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                              : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                          }`}
+                        >
+                          {score}
+                        </span>
+
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                              {quiz?.title || "Uji Kompetensi"}
+                            </h4>
+                            <Badge variant={isPassed ? "success" : "danger"} className="text-[10px]">
+                              {isPassed ? "LULUS" : "REMEDIAL"}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            Modul: {course?.title || "Informatika"} • Tanggal:{" "}
+                            {new Date(attempt.started_at).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {course?.slug && (
+                        <Link href={`/courses/${course.slug}/quiz`}>
+                          <Button size="sm" variant="outline" className="gap-1.5 text-xs">
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Ulangi Kuis
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
                   );
                 })}
               </div>

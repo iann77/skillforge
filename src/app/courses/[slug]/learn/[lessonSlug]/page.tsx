@@ -196,6 +196,23 @@ export default async function LearnLessonPage({ params }: Props) {
               </Link>
             );
           })}
+          {/* Tombol Kuis Evaluasi di Sidebar */}
+          <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800">
+            <Link
+              href={`/courses/${course.slug}/quiz`}
+              className="flex items-center gap-3 p-3 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-900 border border-indigo-200/80 hover:border-indigo-400 transition-all dark:from-indigo-950/60 dark:to-purple-950/40 dark:text-indigo-200 dark:border-indigo-800"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white text-[10px] shrink-0">
+                <Award className="h-3 w-3" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="truncate">Uji Kompetensi Modul</p>
+                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-normal block">
+                  Evaluasi Kuis Akhir
+                </span>
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Footer Sidebar */}
@@ -315,11 +332,18 @@ export default async function LearnLessonPage({ params }: Props) {
                 </Button>
               </form>
 
-              {nextLesson && (
+              {nextLesson ? (
                 <Link href={`/courses/${course.slug}/learn/${nextLesson.slug}`}>
                   <Button variant="outline" size="sm" className="gap-1.5 text-xs">
                     Berikutnya
                     <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link href={`/courses/${course.slug}/quiz`}>
+                  <Button size="sm" className="gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 font-semibold shadow-sm">
+                    <Award className="h-4 w-4" />
+                    Lanjut ke Uji Kompetensi Kuis
                   </Button>
                 </Link>
               )}
