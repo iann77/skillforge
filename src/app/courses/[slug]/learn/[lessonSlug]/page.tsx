@@ -2,7 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { toggleLessonProgressAction } from "@/app/courses/actions";
+import { toggleLessonProgressAction, toggleBookmarkAction } from "@/app/courses/actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,6 +15,7 @@ import {
   Award,
   Sparkles,
   Menu,
+  Bookmark,
 } from "lucide-react";
 
 interface Props {
@@ -118,6 +119,16 @@ export default async function LearnLessonPage({ params }: Props) {
   // Hitung persentase progres kursus
   const completedCount = allLessons.filter((l) => completedSet.has(l.id)).length;
   const progressPercentage = Math.round((completedCount / allLessons.length) * 100);
+
+  // Cek apakah pelajaran ini di-bookmark
+  const { data: bookmark } = await supabase
+    .from("bookmarks")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("lesson_id", currentLesson.id)
+    .maybeSingle();
+
+  const isBookmarked = !!bookmark;
 
   const learningObjectives =
     typeof currentLesson.learning_objectives === "string"
@@ -241,7 +252,28 @@ export default async function LearnLessonPage({ params }: Props) {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <form
+              action={async () => {
+                "use server";
+                await toggleBookmarkAction(currentLesson.id, course.slug, currentLesson.slug);
+              }}
+            >
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className={`gap-1.5 text-xs h-8 ${
+                  isBookmarked
+                    ? "border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700"
+                    : "text-slate-600 hover:text-indigo-600"
+                }`}
+              >
+                <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? "fill-amber-500 text-amber-500" : ""}`} />
+                <span className="hidden sm:inline">{isBookmarked ? "Tersimpan" : "Simpan Materi"}</span>
+              </Button>
+            </form>
+
             <span className="text-xs font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded">
               {currentLesson.estimated_minutes} Menit
             </span>

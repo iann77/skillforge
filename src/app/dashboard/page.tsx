@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/app/auth/actions";
+import { calculateGamification } from "@/lib/gamification";
 import {
   BookOpen,
   GraduationCap,
@@ -19,6 +20,13 @@ import {
   Clock,
   Sparkles,
   RotateCcw,
+  Bookmark,
+  Settings,
+  Zap,
+  Lock,
+  Compass,
+  Footprints,
+  BookOpenCheck,
 } from "lucide-react";
 
 export const metadata = {
@@ -66,6 +74,13 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .order("started_at", { ascending: false });
 
+  // Ambil materi tersimpan (Bookmarks)
+  const { data: bookmarks } = await supabase
+    .from("bookmarks")
+    .select("id, created_at, lessons(id, title, slug, estimated_minutes, courses(title, slug))")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
   const averageScore =
     quizAttempts && quizAttempts.length > 0
       ? (
@@ -74,12 +89,27 @@ export default async function DashboardPage() {
         ).toFixed(1)
       : 0;
 
+  const passedQuizzesCount = quizAttempts?.filter((q) => q.is_passed).length || 0;
+  const perfectQuizzesCount = quizAttempts?.filter((q) => Number(q.score) === 100).length || 0;
+  const completedCoursesCount =
+    enrollments?.filter((e) => Number(e.progress_percentage) === 100).length || 0;
+  const enrolledCoursesCount = enrollments?.length || 0;
+
+  // Hitung gamifikasi (XP, Level, Badges)
+  const gamification = calculateGamification({
+    completedLessonsCount: completedLessonsCount || 0,
+    passedQuizzesCount,
+    perfectQuizzesCount,
+    enrolledCoursesCount,
+    completedCoursesCount,
+  });
+
   const fullName = profile?.full_name || user.email?.split("@")[0] || "Mahasiswa";
   const userRole = profile?.role || "student";
   const institution = profile?.institution || "Pendidikan Informatika";
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col text-slate-900 dark:text-slate-100">
       {/* Top Header Navbar */}
       <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
         <Container size="default">
@@ -98,10 +128,17 @@ export default async function DashboardPage() {
               </div>
             </Link>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Link href="/courses">
                 <Button variant="ghost" size="sm" className="hidden sm:inline-flex text-xs">
                   Katalog Modul
+                </Button>
+              </Link>
+
+              <Link href="/dashboard/profile">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                  <Settings className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Pengaturan Profil</span>
                 </Button>
               </Link>
 
@@ -114,8 +151,8 @@ export default async function DashboardPage() {
               )}
 
               <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-                <div className="hidden md:flex flex-col text-right">
-                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <div className="flex flex-col text-right hidden sm:flex">
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white max-w-[120px] truncate">
                     {fullName}
                   </span>
                   <span className="text-[10px] text-slate-500 capitalize">{userRole}</span>
@@ -123,12 +160,12 @@ export default async function DashboardPage() {
 
                 <form action={logoutAction}>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="gap-1 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                    className="gap-1 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 p-2"
+                    title="Keluar"
                   >
-                    <LogOut className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Keluar</span>
+                    <LogOut className="h-4 w-4" />
                   </Button>
                 </form>
               </div>
@@ -140,19 +177,69 @@ export default async function DashboardPage() {
       {/* Main Content */}
       <main className="flex-1 py-8">
         <Container size="default">
-          {/* Welcome Banner */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl mb-8">
-            <div className="relative z-10 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-800/80 border border-indigo-700 text-xs font-medium text-indigo-200 mb-3">
-                <Sparkles className="h-3.5 w-3.5 text-indigo-300" />
-                <span>{institution}</span>
+          {/* Welcome & Gamification Banner */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-950 p-6 sm:p-8 text-white shadow-xl mb-8">
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="max-w-xl space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-800/80 border border-indigo-700 text-xs font-medium text-indigo-200">
+                  <Sparkles className="h-3.5 w-3.5 text-indigo-300" />
+                  <span>{institution}</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  Selamat Datang, {fullName}! 👋
+                </h1>
+                <p className="text-sm text-indigo-200 leading-relaxed">
+                  Lanjutkan modul belajar Anda, raih XP dari setiap latihan & kuis, dan bangun portfolio akademik informatika berstandar industri.
+                </p>
+                <div className="pt-2">
+                  <Link href="/dashboard/profile">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-indigo-400/50 bg-indigo-900/40 text-indigo-100 hover:bg-indigo-800 text-xs gap-1.5"
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      Kelola Identitas Profil
+                    </Button>
+                  </Link>
+                </div>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Selamat Datang, {fullName}! 👋
-              </h1>
-              <p className="mt-2 text-sm sm:text-base text-indigo-200 leading-relaxed">
-                Lanjutkan perjalanan belajar Anda. Pantau capaian kompetensi informatika dan tingkatkan pemahaman melalui lab dan evaluasi terpadu.
-              </p>
+
+              {/* Gamification Level & XP Card */}
+              <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15 min-w-[280px] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400 text-amber-950 font-black text-xs">
+                      Lvl {gamification.level}
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block">{gamification.levelTitle}</span>
+                      <span className="text-[10px] text-indigo-200">Tier Akademik</span>
+                    </div>
+                  </div>
+                  <Badge variant="warning" className="text-[11px] font-mono gap-1">
+                    <Zap className="h-3 w-3 fill-amber-500" />
+                    {gamification.totalXp} XP
+                  </Badge>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-indigo-200">
+                    <span>Progres Level</span>
+                    <span>
+                      {gamification.level === 5
+                        ? "Maksimal"
+                        : `${gamification.progressPercent}% menuju Lvl ${gamification.level + 1}`}
+                    </span>
+                  </div>
+                  <div className="w-full bg-black/30 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-amber-400 to-indigo-400 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${gamification.progressPercent}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -193,18 +280,80 @@ export default async function DashboardPage() {
 
             <Card className="border-slate-200/80">
               <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-                <span className="text-xs font-semibold text-slate-500">Streak Belajar</span>
+                <span className="text-xs font-semibold text-slate-500">Total Pengalaman</span>
                 <Flame className="h-4 w-4 text-rose-500" />
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                <div className="text-2xl font-bold">1 Hari</div>
-                <p className="text-[11px] text-slate-500 mt-1">Konsistensi belajar harian</p>
+                <div className="text-2xl font-bold">{gamification.totalXp} XP</div>
+                <p className="text-[11px] text-slate-500 mt-1">Poin reputasi akademik</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Course Enrolled Section / Informative Empty State */}
-          <div className="space-y-4">
+          {/* Prestasi Akademik & Badges */}
+          <div className="mb-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Award className="h-5 w-5 text-amber-500" />
+                  Prestasi & Badges Mahasiswa
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {gamification.unlockedBadgesCount} dari {gamification.totalBadgesCount} lencana kompetensi telah Anda raih
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {gamification.badges.map((b) => (
+                <div
+                  key={b.id}
+                  className={`p-3.5 rounded-2xl border text-center flex flex-col items-center justify-between transition-all ${
+                    b.isUnlocked
+                      ? "border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900/60 shadow-sm"
+                      : "border-slate-200 bg-slate-50/60 opacity-60 dark:bg-slate-900/40 dark:border-slate-800"
+                  }`}
+                >
+                  <div
+                    className={`h-11 w-11 rounded-2xl flex items-center justify-center mb-2 shadow-sm ${
+                      b.isUnlocked
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300"
+                        : "bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                    }`}
+                  >
+                    {b.isUnlocked ? (
+                      b.icon === "Footprints" ? (
+                        <Footprints className="h-5 w-5" />
+                      ) : b.icon === "BookOpenCheck" ? (
+                        <BookOpenCheck className="h-5 w-5" />
+                      ) : b.icon === "Award" ? (
+                        <Award className="h-5 w-5" />
+                      ) : b.icon === "Sparkles" ? (
+                        <Sparkles className="h-5 w-5" />
+                      ) : b.icon === "Compass" ? (
+                        <Compass className="h-5 w-5" />
+                      ) : (
+                        <GraduationCap className="h-5 w-5" />
+                      )
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                      {b.title}
+                    </h4>
+                    <p className="text-[10px] text-slate-500 mt-1 line-clamp-2 leading-tight">
+                      {b.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Course Enrolled Section */}
+          <div className="space-y-4 mb-8">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -287,6 +436,65 @@ export default async function DashboardPage() {
                           <Button size="sm" className="gap-1.5 text-xs">
                             <BookOpen className="h-3.5 w-3.5" />
                             Lanjutkan Belajar
+                          </Button>
+                        </Link>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Bookmarks Section (Materi Tersimpan) */}
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Bookmark className="h-5 w-5 text-amber-500" />
+                  Materi Tersimpan (Bookmarks)
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Daftar materi penting yang Anda simpan untuk referensi cepat
+                </p>
+              </div>
+            </div>
+
+            {(!bookmarks || bookmarks.length === 0) ? (
+              <Card className="p-6 text-center border-dashed border border-slate-200 dark:border-slate-800">
+                <p className="text-xs text-slate-500">
+                  Belum ada materi yang disimpan. Saat membaca pelajaran di Ruang Belajar, klik tombol <strong>"Simpan Materi"</strong> di kanan atas untuk menandai materi favorit.
+                </p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {bookmarks.map((bm: any) => {
+                  const lesson = Array.isArray(bm.lessons) ? bm.lessons[0] : bm.lessons;
+                  const course = lesson && Array.isArray(lesson.courses) ? lesson.courses[0] : lesson?.courses;
+                  if (!lesson || !course) return null;
+
+                  return (
+                    <Card
+                      key={bm.id}
+                      className="p-4 border-slate-200 hover:border-amber-300 transition-colors flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider block truncate">
+                          {course.title}
+                        </span>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">
+                          {lesson.title}
+                        </h4>
+                        <span className="text-xs text-slate-500 flex items-center gap-1.5">
+                          <Clock className="h-3 w-3" /> {lesson.estimated_minutes} Menit
+                        </span>
+                      </div>
+
+                      <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800">
+                        <Link href={`/courses/${course.slug}/learn/${lesson.slug}`} className="w-full block">
+                          <Button variant="outline" size="sm" className="w-full text-xs gap-1.5">
+                            Buka Materi
+                            <ArrowRight className="h-3 w-3" />
                           </Button>
                         </Link>
                       </div>

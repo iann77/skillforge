@@ -144,3 +144,37 @@ export async function toggleLessonProgressAction(
     redirect(`/courses/${courseSlug}/learn/${nextLessonSlug}`);
   }
 }
+
+export async function toggleBookmarkAction(
+  lessonId: string,
+  courseSlug: string,
+  lessonSlug: string
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/auth/login?redirect=/courses/${courseSlug}/learn/${lessonSlug}`);
+  }
+
+  const { data: existing } = await supabase
+    .from("bookmarks")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from("bookmarks").delete().eq("id", existing.id);
+  } else {
+    await supabase.from("bookmarks").insert({
+      user_id: user.id,
+      lesson_id: lessonId,
+    });
+  }
+
+  revalidatePath(`/courses/${courseSlug}/learn/${lessonSlug}`);
+  revalidatePath("/dashboard");
+}
