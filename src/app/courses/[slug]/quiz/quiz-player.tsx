@@ -131,19 +131,27 @@ export function QuizPlayer({
             </div>
 
             <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
+              {result.isPassed && (
+                <Link href={`/courses/${courseSlug}/certificate`}>
+                  <Button className="gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 shadow-md font-semibold">
+                    <Award className="h-4 w-4" />
+                    Klaim Sertifikat Kelulusan Resmi
+                  </Button>
+                </Link>
+              )}
               <Button onClick={handleRetake} variant="outline" className="gap-2 text-xs">
                 <RotateCcw className="h-4 w-4" />
                 Ulangi Pengerjaan Kuis
               </Button>
               <Link href={`/courses/${courseSlug}`}>
-                <Button className="gap-2 text-xs">
+                <Button variant="outline" className="gap-2 text-xs">
                   <CheckCircle2 className="h-4 w-4" />
-                  Kembali ke Detail Kursus
+                  Detail Kursus
                 </Button>
               </Link>
               <Link href="/dashboard">
                 <Button variant="ghost" className="gap-2 text-xs">
-                  Lihat di Dashboard Mahasiswa
+                  Ke Dashboard
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>

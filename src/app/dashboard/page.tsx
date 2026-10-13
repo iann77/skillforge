@@ -428,14 +428,23 @@ export default async function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
-                        <span className="text-xs text-slate-400">
-                          {progress === 100 ? "100% Selesai" : "Lanjutkan modul"}
-                        </span>
+                      <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between gap-2">
+                        {progress === 100 ? (
+                          <Link href={`/courses/${course.slug}/certificate`}>
+                            <Button size="sm" variant="outline" className="gap-1.5 text-xs border-amber-300 text-amber-800 bg-amber-50/60 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800">
+                              <Award className="h-3.5 w-3.5 text-amber-600" />
+                              Sertifikat
+                            </Button>
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-slate-400">
+                            Lanjutkan modul
+                          </span>
+                        )}
                         <Link href={`/courses/${course.slug}`}>
                           <Button size="sm" className="gap-1.5 text-xs">
                             <BookOpen className="h-3.5 w-3.5" />
-                            Lanjutkan Belajar
+                            {progress === 100 ? "Tinjau Modul" : "Lanjutkan Belajar"}
                           </Button>
                         </Link>
                       </div>
