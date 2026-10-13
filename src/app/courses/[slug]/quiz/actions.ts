@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface SubmitQuizPayload {
   quizId: string;
@@ -37,6 +38,7 @@ export async function submitQuizAction(
   payload: SubmitQuizPayload
 ): Promise<{ success: boolean; result?: QuizSubmissionResult; error?: string }> {
   const supabase = await createClient();
+  const adminDb = createAdminClient();
 
   const {
     data: { user },
@@ -48,8 +50,8 @@ export async function submitQuizAction(
 
   const { quizId, courseSlug, answers } = payload;
 
-  // 1. Ambil data kuis
-  const { data: quiz, error: qErr } = await supabase
+  // 1. Ambil data kuis via adminDb
+  const { data: quiz, error: qErr } = await adminDb
     .from("quizzes")
     .select("id, title, passing_score, course_id")
     .eq("id", quizId)
@@ -59,8 +61,8 @@ export async function submitQuizAction(
     return { success: false, error: "Data kuis tidak ditemukan." };
   }
 
-  // 2. Ambil semua pertanyaan beserta opsi jawabannya
-  const { data: questions, error: questErr } = await supabase
+  // 2. Ambil semua pertanyaan beserta opsi jawabannya via adminDb
+  const { data: questions, error: questErr } = await adminDb
     .from("quiz_questions")
     .select("id, question_text, explanation, sort_order, quiz_options(id, option_text, is_correct, sort_order)")
     .eq("quiz_id", quizId)
@@ -113,8 +115,8 @@ export async function submitQuizAction(
   const score = Math.round((correctCount / totalQuestions) * 100);
   const isPassed = score >= quiz.passing_score;
 
-  // 4. Simpan percobaan kuis ke tabel quiz_attempts
-  const { data: attempt, error: attemptErr } = await supabase
+  // 4. Simpan percobaan kuis ke tabel quiz_attempts via adminDb
+  const { data: attempt, error: attemptErr } = await adminDb
     .from("quiz_attempts")
     .insert({
       user_id: user.id,
@@ -131,7 +133,7 @@ export async function submitQuizAction(
     return { success: false, error: "Gagal menyimpan hasil kuis ke database." };
   }
 
-  // 5. Simpan detail jawaban ke quiz_answers
+  // 5. Simpan detail jawaban ke quiz_answers via adminDb
   const answersRecords = answersToInsert.map((ans) => ({
     attempt_id: attempt.id,
     question_id: ans.question_id,
@@ -139,10 +141,10 @@ export async function submitQuizAction(
     is_correct: ans.is_correct,
   }));
 
-  await supabase.from("quiz_answers").insert(answersRecords);
+  await adminDb.from("quiz_answers").insert(answersRecords);
 
-  // 6. Catat aktivitas belajar
-  await supabase.from("learning_activities").insert({
+  // 6. Catat aktivitas belajar via adminDb
+  await adminDb.from("learning_activities").insert({
     user_id: user.id,
     activity_type: "quiz_completed",
     description: `Menyelesaikan kuis "${quiz.title}" dengan skor ${score}/100 (${isPassed ? "Lulus" : "Belum Lulus"})`,

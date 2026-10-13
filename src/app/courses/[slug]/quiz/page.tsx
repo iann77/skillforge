@@ -1,10 +1,13 @@
 import * as React from "react";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Container } from "@/components/ui/container";
 import { QuizPlayer } from "./quiz-player";
+
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -12,9 +15,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const adminDb = createAdminClient();
 
-  const { data: course } = await supabase
+  const { data: course } = await adminDb
     .from("courses")
     .select("title")
     .eq("slug", slug)
@@ -29,6 +32,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function CourseQuizPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
+  const adminDb = createAdminClient();
 
   const {
     data: { user },
@@ -46,7 +50,7 @@ export default async function CourseQuizPage({ params }: Props) {
     .single();
 
   // Ambil kursus
-  const { data: course } = await supabase
+  const { data: course } = await adminDb
     .from("courses")
     .select("id, title, slug")
     .eq("slug", slug)
@@ -56,8 +60,8 @@ export default async function CourseQuizPage({ params }: Props) {
     return notFound();
   }
 
-  // Ambil data kuis
-  const { data: quiz } = await supabase
+  // Ambil data kuis menggunakan adminDb agar bebas dari pemblokiran RLS
+  const { data: quiz } = await adminDb
     .from("quizzes")
     .select("id, title, description, passing_score")
     .eq("course_id", course.id)
@@ -84,7 +88,7 @@ export default async function CourseQuizPage({ params }: Props) {
 
   // Ambil pertanyaan beserta opsi (HANYA id, question_text, sort_order, dan opsi tanpa is_correct)
   // Untuk keamanan tinggi, kita tidak memilih is_correct di sini!
-  const { data: questions } = await supabase
+  const { data: questions } = await adminDb
     .from("quiz_questions")
     .select("id, question_text, sort_order, quiz_options(id, option_text, sort_order)")
     .eq("quiz_id", quiz.id)
